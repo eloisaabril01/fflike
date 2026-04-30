@@ -1,48 +1,42 @@
-// Proxy for like API - CommonJS syntax for Vercel compatibility
-module.exports = async function handler(req, res) {
+// Vercel Serverless Function — proxies the like API to fix CORS
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { uid, server_name } = req.query;
 
   if (!uid || !server_name) {
-    res.status(400).json({ error: 'Missing uid or server_name', received: req.query });
-    return;
+    return res.status(400).json({ error: 'Missing uid or server_name' });
   }
 
-  const targetUrl = `https://sneha-like-api-ixc1.vercel.app/like?uid=${encodeURIComponent(uid)}&server_name=${encodeURIComponent(server_name)}`;
-
   try {
-    const response = await fetch(targetUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json'
-      }
-    });
+    const url = `https://sneha-like-api-ixc1.vercel.app/like?uid=${uid}&server_name=${server_name}`;
+    const response = await fetch(url);
+
+    // Check if upstream returned a valid response
+    if (!response.ok) {
+      return res.status(502).json({
+        error: `Upstream API error: ${response.status} ${response.statusText}`
+      });
+    }
 
     const text = await response.text();
 
+    // Safely parse JSON — upstream sometimes returns non-JSON on errors
     let data;
     try {
       data = JSON.parse(text);
-    } catch (e) {
-      res.status(200).json({ error: 'Invalid JSON from upstream', raw: text, upstreamStatus: response.status });
-      return;
+    } catch {
+      return res.status(502).json({
+        error: 'Upstream returned non-JSON: ' + text.slice(0, 200)
+      });
     }
 
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(500).json({
-      error: err.message,
-      type: err.constructor.name,
-      target: targetUrl
-    });
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
-};
+}
