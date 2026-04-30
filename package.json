@@ -4,6 +4,6 @@
   "description": "Free Fire Auto Liker Dashboard with Cloud Storage",
   "private": true,
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
