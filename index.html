@@ -652,14 +652,14 @@ async function sendLike(isAuto = false) {
   }
 
   try {
-    // The like API blocks server-side calls (whitelist), so we call it via CORS proxy
-    const likeUrl = `https://sneha-like-api-ixc1.vercel.app/like?uid=${uid}&server_name=${server}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(likeUrl)}`;
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error('Proxy error: ' + res.status);
-    const wrapper = await res.json();
-    if (!wrapper.contents) throw new Error('Empty response from proxy');
-    const data = JSON.parse(wrapper.contents);
+    const url = `${API_BASE}?uid=${uid}&server_name=${server}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      let errMsg = `HTTP ${res.status}`;
+      try { const e = await res.json(); errMsg = e.error || errMsg; } catch {}
+      throw new Error(errMsg);
+    }
+    const data = await res.json();
 
     const now = new Date();
     const istStr = fmtIST(now);
