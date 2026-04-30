@@ -1,0 +1,9 @@
+{
+  "name": "freelike-dashboard",
+  "version": "2.0.0",
+  "description": "Free Fire Auto Liker Dashboard with Cloud Storage",
+  "private": true,
+  "engines": {
+    "node": "18.x"
+  }
+}
