@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/api/like", "dest": "/api/like.js" },
     { "src": "/api/data", "dest": "/api/data.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
