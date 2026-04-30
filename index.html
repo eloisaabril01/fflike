@@ -572,9 +572,16 @@ async function loadData() {
     const json = await res.json();
     if (json.error) throw new Error(json.error);
     appData = json;
-    // Merge missing keys
+    // Merge missing keys — guard every field so nothing is ever undefined
+    if (!Array.isArray(appData.history)) appData.history = [];
+    if (!appData.stats) appData.stats = {};
     if (!appData.stats.autoRuns) appData.stats.autoRuns = 0;
     if (!appData.stats.lastRun) appData.stats.lastRun = '';
+    if (!appData.stats.todayDate) appData.stats.todayDate = '';
+    if (typeof appData.stats.total !== 'number') appData.stats.total = 0;
+    if (typeof appData.stats.today !== 'number') appData.stats.today = 0;
+    if (typeof appData.stats.sessions !== 'number') appData.stats.sessions = 0;
+    if (!appData.schedule) appData.schedule = { enabled: false, time: '06:00', uid: '', server: 'ind' };
     setCloudStatus(true);
     lastSyncAt = new Date();
     document.getElementById('lastSyncTime').textContent = 'Last sync: ' + fmtIST(new Date());
@@ -660,6 +667,11 @@ async function sendLike(isAuto = false) {
       throw new Error(errMsg);
     }
     const data = await res.json();
+
+    // Safety: ensure appData structure is always intact before writing
+    if (!Array.isArray(appData.history)) appData.history = [];
+    if (!appData.stats) appData.stats = { total: 0, today: 0, todayDate: '', sessions: 0, autoRuns: 0, lastRun: '' };
+    if (!appData.schedule) appData.schedule = { enabled: false, time: '06:00', uid: '', server: 'ind' };
 
     const now = new Date();
     const istStr = fmtIST(now);
